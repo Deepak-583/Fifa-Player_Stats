@@ -7,7 +7,6 @@ import sys
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-import plotly.express as px
 import numpy as np
 from pathlib import Path
 from models import train_models, predict_value, predict_potential, get_similar_players
@@ -94,40 +93,57 @@ def derive_player_stats(row: pd.Series) -> dict:
 
 
 def create_radar_chart(players_data: list[dict]) -> go.Figure:
-    """Create an overlapping radar chart for one or more players."""
+    """Create an overlapping radar chart for one or more players (football theme)."""
     fig = go.Figure()
-
-    colors = px.colors.qualitative.Set1
+    # Football-inspired colors: pitch line white, team colors
+    TEAM_COLORS = ["#ffd700", "#00bfff", "#ff6b35", "#7cfc00", "#ff1493"]
     for i, p in enumerate(players_data):
         name = p["name"]
         stats = p["stats"]
-        theta = STAT_CATEGORIES + [STAT_CATEGORIES[0]]  # Close the shape
+        theta = STAT_CATEGORIES + [STAT_CATEGORIES[0]]
         r = [stats[s] for s in STAT_CATEGORIES] + [stats[STAT_CATEGORIES[0]]]
-        color = colors[i % len(colors)]
+        color = TEAM_COLORS[i % len(TEAM_COLORS)]
         fig.add_trace(
             go.Scatterpolar(
                 r=r,
                 theta=theta,
                 name=name,
-                line=dict(color=color, width=2.5),
+                line=dict(color=color, width=3),
                 fill="toself",
-                opacity=0.35,
+                opacity=0.4,
             )
         )
 
     fig.update_layout(
         polar=dict(
-            radialaxis=dict(visible=True, range=[0, 100], tickvals=[20, 40, 60, 80, 100]),
-            angularaxis=dict(tickfont=dict(size=14)),
+            bgcolor="rgba(26,61,10,0.6)",
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                tickvals=[20, 40, 60, 80, 100],
+                gridcolor="rgba(255,255,255,0.3)",
+                tickfont=dict(color="#f5f5dc", size=12),
+            ),
+            angularaxis=dict(
+                gridcolor="rgba(255,255,255,0.3)",
+                tickfont=dict(color="#f5f5dc", size=13),
+            ),
         ),
         showlegend=True,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
-        title=dict(text="Player Skills Radar Chart", font=dict(size=22)),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(color="#f5f5dc", size=14),
+            bgcolor="rgba(26,61,10,0.8)",
+        ),
+        title=dict(text="Player Skills Radar Chart", font=dict(size=24, color="#ffd700")),
         margin=dict(t=80, b=60, l=80, r=80),
         height=500,
-        template="plotly_white",
         paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(245,245,245,0.8)",
+        font=dict(color="#f5f5dc"),
     )
     return fig
 
@@ -140,20 +156,126 @@ def main():
         initial_sidebar_state="collapsed",
     )
 
-    # Custom styling
+    # Football-themed styling
     st.markdown(
         """
         <style>
-        .main { padding-top: 1rem; }
-        h1 { color: #1a472a; font-weight: 700; }
-        .stSelectbox > div { font-size: 1.1rem; }
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&display=swap');
+        
+        /* Pitch-style background with stripes */
+        .stApp {
+            background: linear-gradient(180deg, #1a3d0a 0%, #2d5016 25%, #3d6b1a 50%, #2d5016 75%, #1a3d0a 100%);
+            background-size: 100% 100%;
+        }
+        .stApp::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 80px,
+                rgba(255,255,255,0.02) 80px,
+                rgba(255,255,255,0.02) 81px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* Main content area - pitch center / floodlit feel */
+        .main .block-container {
+            padding: 2rem 2rem 3rem;
+            max-width: 1200px;
+            background: linear-gradient(145deg, rgba(61,107,26,0.85) 0%, rgba(45,80,22,0.9) 50%, rgba(26,61,10,0.95) 100%);
+            border-radius: 12px;
+            border: 3px solid rgba(255,215,0,0.4);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 0 60px rgba(255,255,255,0.03);
+            margin-top: 1rem;
+        }
+        
+        /* Headers - jersey number style */
+        h1 {
+            font-family: 'Bebas Neue', sans-serif !important;
+            color: #ffd700 !important;
+            font-size: 2.8rem !important;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            letter-spacing: 2px;
+        }
+        h2, h3 {
+            font-family: 'Oswald', sans-serif !important;
+            color: #f5f5dc !important;
+            font-weight: 600 !important;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+        }
+        p, span, div[data-testid="stMarkdown"] {
+            color: #f5f5dc !important;
+        }
+        .stCaption {
+            color: #c8d4a8 !important;
+        }
+        
+        /* Selectboxes - pitch line style */
+        .stSelectbox > div {
+            background: rgba(255,255,255,0.95) !important;
+            border: 2px solid #2d5016 !important;
+            border-radius: 8px !important;
+            font-family: 'Oswald', sans-serif !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Expander - stadium section */
+        .streamlit-expanderHeader {
+            background: rgba(45,80,22,0.9) !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 8px !important;
+            color: #ffd700 !important;
+        }
+        
+        /* Info boxes - player card style */
+        div[data-testid="stAlert"] {
+            background: linear-gradient(135deg, rgba(26,61,10,0.95) 0%, rgba(45,80,22,0.9) 100%) !important;
+            border: 2px solid #ffd700 !important;
+            border-radius: 8px !important;
+        }
+        div[data-testid="stAlert"] p, div[data-testid="stAlert"] strong {
+            color: #f5f5dc !important;
+        }
+        
+        /* Metrics - scoreboard style */
+        [data-testid="stMetricValue"] {
+            font-family: 'Bebas Neue', sans-serif !important;
+            font-size: 2rem !important;
+            color: #ffd700 !important;
+        }
+        [data-testid="stMetricLabel"] {
+            color: #c8d4a8 !important;
+            font-family: 'Oswald', sans-serif !important;
+        }
+        
+        /* Dataframes - pitch overlay */
+        .stDataFrame {
+            border-radius: 8px !important;
+            overflow: hidden !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+        }
+        
+        /* Divider - pitch line */
+        hr {
+            border-color: rgba(255,215,0,0.5) !important;
+            margin: 1.5rem 0 !important;
+        }
+        
+        /* Hide Streamlit branding for cleaner look */
+        #MainMenu { visibility: hidden; }
+        footer { visibility: hidden; }
+        header { background: rgba(26,61,10,0.9) !important; }
         </style>
         """,
         unsafe_allow_html=True,
     )
 
     st.title("⚽ FIFA Player Stats – Spider Web Comparator")
-    st.caption("Compare strengths and weaknesses of football players using radar charts")
+    st.caption("🏟️ Compare strengths and weaknesses of football players • Select players to view radar charts")
 
     df = load_data()
     if df.empty:
