@@ -3,9 +3,11 @@ FIFA Player Stats - Spider Web (Radar) Chart Comparator
 Compare strengths and weaknesses of football players using radar charts and ML predictions.
 """
 
+import base64
 import html
 import sys
 import streamlit as st
+import requests
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
@@ -28,6 +30,28 @@ if sys.platform == "win32":
     ])
 
 STAT_CATEGORIES = ["Speed", "Power", "Passing", "Defense", "Shooting"]
+PLACEHOLDER_B64 = "data:image/svg+xml;base64," + base64.b64encode(
+    b'<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><circle cx="60" cy="60" r="55" fill="#1e293b" stroke="#475569" stroke-width="2"/><text x="60" y="65" fill="#94a3b8" font-size="14" text-anchor="middle">?</text></svg>'
+).decode()
+
+
+def fetch_player_image(url: str) -> str | None:
+    """Fetch image from URL server-side and return as base64 data URI. Bypasses hotlink protection."""
+    if not url or not str(url).startswith("http"):
+        return None
+    try:
+        r = requests.get(
+            url,
+            timeout=5,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
+        )
+        if r.status_code == 200:
+            ext = "png" if "png" in url else "jpeg" if "jpg" in url else "svg+xml" if "svg" in url else "png"
+            b64 = base64.b64encode(r.content).decode()
+            return f"data:image/{ext};base64,{b64}"
+    except Exception:
+        pass
+    return None
 
 
 def load_data() -> pd.DataFrame:
@@ -441,22 +465,33 @@ def main():
     if player2 and player2 != "— None —":
         players_data.append({"name": player2, "stats": cache[player2]["stats"]})
 
-    # VS Box: Player 1 | VS | Player 2 with images
+    # VS Box: Player 1 | VS | Player 2 with images (fetched server-side to bypass CDN hotlink block)
+    if "image_cache" not in st.session_state:
+        st.session_state["image_cache"] = {}
+
+    def get_image_src(url: str) -> str:
+        if not url or not str(url).startswith("http"):
+            return PLACEHOLDER_B64
+        url_str = str(url)
+        if url_str not in st.session_state["image_cache"]:
+            data_uri = fetch_player_image(url_str)
+            st.session_state["image_cache"][url_str] = data_uri or PLACEHOLDER_B64
+        return st.session_state["image_cache"][url_str]
+
     row1 = cache[player1]["row"]
-    img1 = row1.get("Images", "")
+    img1_url = row1.get("Images", "")
     overall1 = row1.get("Overall", "—")
-    placeholder_url = "https://ui-avatars.com/api/?name=Player&size=120&background=1e293b&color=94a3b8"
-    img1_src = str(img1) if img1 and str(img1).startswith("http") else placeholder_url
+    img1_src = get_image_src(img1_url)
 
     if player2 and player2 != "— None —":
         row2 = cache[player2]["row"]
-        img2 = row2.get("Images", "")
+        img2_url = row2.get("Images", "")
         overall2 = row2.get("Overall", "—")
-        img2_src = str(img2) if img2 and str(img2).startswith("http") else placeholder_url
+        img2_src = get_image_src(img2_url)
         name2_esc = html.escape(player2)
         ovr2_html = f'OVR {overall2}'
     else:
-        img2_src = placeholder_url
+        img2_src = PLACEHOLDER_B64
         name2_esc = "Select Player 2"
         ovr2_html = "—"
 
@@ -464,13 +499,13 @@ def main():
         f"""
         <div class="vs-container">
             <div class="vs-player-box left">
-                <img src="{img1_src}" class="vs-img" onerror="this.src='{placeholder_url}'" />
+                <img src="{img1_src}" class="vs-img" alt="{html.escape(player1)}" />
                 <div class="vs-name">{html.escape(player1)}</div>
                 <div class="vs-overall">OVR {overall1}</div>
             </div>
             <div class="vs-divider">VS</div>
             <div class="vs-player-box right">
-                <img src="{img2_src}" class="vs-img" onerror="this.src='{placeholder_url}'" />
+                <img src="{img2_src}" class="vs-img" alt="{name2_esc}" />
                 <div class="vs-name">{name2_esc}</div>
                 <div class="vs-overall">{ovr2_html}</div>
             </div>
