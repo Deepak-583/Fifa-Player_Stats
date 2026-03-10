@@ -3,6 +3,7 @@ FIFA Player Stats - Spider Web (Radar) Chart Comparator
 Compare strengths and weaknesses of football players using radar charts and ML predictions.
 """
 
+import sys
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -13,12 +14,18 @@ from models import train_models, predict_value, predict_potential, get_similar_p
 
 # ============ CONFIG ============
 _BASE = Path(__file__).resolve().parent
+# Try project folder first (works on Streamlit Cloud), then local paths
 DATA_PATHS = [
-    Path(r"c:\Users\CHEYAT COMPUTERS\Downloads\archive\updated_trending_football_players.xlsx"),
-    Path(r"c:\Users\CHEYAT COMPUTERS\Downloads\archive\trending_football_players.xlsx"),
     _BASE / "updated_trending_football_players.xlsx",
     _BASE / "trending_football_players.xlsx",
 ]
+if sys.platform == "win32":
+    DATA_PATHS.extend([
+        Path(r"c:\Users\CHEYAT COMPUTERS\Downloads\archive\updated_trending_football_players.xlsx"),
+        Path(r"c:\Users\CHEYAT COMPUTERS\Downloads\archive\trending_football_players.xlsx"),
+        Path.home() / "Downloads" / "archive" / "updated_trending_football_players.xlsx",
+        Path.home() / "Downloads" / "archive" / "trending_football_players.xlsx",
+    ])
 
 STAT_CATEGORIES = ["Speed", "Power", "Passing", "Defense", "Shooting"]
 
@@ -33,7 +40,10 @@ def load_data() -> pd.DataFrame:
             except Exception as e:
                 st.warning(f"Could not load {path.name}: {e}")
                 continue
-    st.error("No data file found. Please ensure the Excel files are in the Downloads/archive folder.")
+    st.error(
+        "No data file found. Add `updated_trending_football_players.xlsx` or "
+        "`trending_football_players.xlsx` to the project folder (or Downloads/archive locally)."
+    )
     return pd.DataFrame()
 
 
