@@ -12,7 +12,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 from pathlib import Path
-from models import train_models, predict_value, predict_potential, get_similar_players
 
 # ============ CONFIG ============
 _BASE = Path(__file__).resolve().parent
@@ -313,7 +312,34 @@ def main():
             font-family: 'Oswald', sans-serif !important;
         }
         
-        /* Dataframes - subtle gradient border */
+        /* Detailed stats table - white gradient, centered numbers */
+        .streamlit-expanderContent {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%) !important;
+            border-radius: 12px !important;
+            padding: 1rem !important;
+            border: 1px solid rgba(0,212,255,0.3) !important;
+        }
+        .streamlit-expanderContent .stDataFrame {
+            background: transparent !important;
+        }
+        .streamlit-expanderContent [data-testid="stDataFrame"] table {
+            font-family: 'Oswald', sans-serif !important;
+        }
+        .streamlit-expanderContent [data-testid="stDataFrame"] th {
+            background: linear-gradient(90deg, #1e3a5f, #0c4a6e) !important;
+            color: #f8fafc !important;
+            text-align: center !important;
+            font-weight: 600 !important;
+        }
+        .streamlit-expanderContent [data-testid="stDataFrame"] td {
+            text-align: center !important;
+            color: #0f172a !important;
+            background: rgba(255,255,255,0.6) !important;
+        }
+        .streamlit-expanderContent [data-testid="stDataFrame"] td:first-child {
+            font-weight: 600 !important;
+            color: #0c4a6e !important;
+        }
         .stDataFrame {
             border-radius: 10px !important;
             overflow: hidden !important;
@@ -414,17 +440,6 @@ def main():
     if "Wage" not in df.columns:
         df["Wage"] = 5000
 
-    # Train ML models (cached in session)
-    if "ml_models" not in st.session_state:
-        with st.spinner("Training models (Value, Potential, Similar Players)..."):
-            try:
-                st.session_state["ml_models"] = train_models(df, derive_player_stats)
-            except Exception as e:
-                st.warning(f"Model training skipped: {e}. Predictions will be unavailable.")
-                st.session_state["ml_models"] = None
-
-    ml_models = st.session_state.get("ml_models")
-
     # Build player stats cache
     if "player_stats_cache" not in st.session_state:
         cache = {}
@@ -518,57 +533,40 @@ def main():
     fig = create_radar_chart(players_data)
     st.plotly_chart(fig, use_container_width=True)
 
-    # Stats table below chart
+    # Stats table below chart (white gradient box, centered numbers)
     with st.expander("📊 View detailed stats", expanded=False):
         rows = []
         for p in players_data:
             r = {"Player": p["name"], **{k: p["stats"][k] for k in STAT_CATEGORIES}}
             rows.append(r)
         tbl = pd.DataFrame(rows)
-        st.dataframe(tbl, use_container_width=True, hide_index=True)
+        st.dataframe(tbl, use_container_width=True, hide_index=True, column_config={
+            c: st.column_config.NumberColumn(c, format="%d") for c in STAT_CATEGORIES
+        })
 
-    # Player info cards
+    # Key Stats - what football fans care about (Age, Value, Wage, etc.)
     st.markdown("---")
-    for pname in [player1] + ([player2] if player2 and player2 != "— None —" else []):
+    st.subheader("Key Stats")
+    key_col1, key_col2 = st.columns(2)
+    for idx, pname in enumerate([player1] + ([player2] if player2 and player2 != "— None —" else [])):
         info = cache[pname]["row"]
+        age = info.get("Age", "—")
+        overall = info.get("Overall", "—")
+        potential = info.get("Potential_overall", "—")
+        pos = info.get("Positions", "—")
+        value = info.get("Value", 0)
+        wage = info.get("Wage", 0)
         club = info.get("Current_club", "—")
         nation = info.get("National_team", "—")
-        pos = info.get("Positions", "—")
-        overall = info.get("Overall", "—")
-        st.info(f"**{pname}** | Club: {club} | Nation: {nation} | Position: {pos} | Overall: {overall}")
-
-    # Predictions section (simple, user-friendly)
-    st.markdown("---")
-    st.subheader("Predictions")
-    if ml_models:
-        pred_col1, pred_col2 = st.columns(2)
-        row1 = cache[player1]["row"]
-        with pred_col1:
-            try:
-                pred_val = predict_value(ml_models, row1)
-                st.metric("Estimated Market Value", f"€{pred_val/1e6:.2f}M")
-            except Exception:
-                st.metric("Estimated Market Value", "—")
-        with pred_col2:
-            try:
-                pred_pot = predict_potential(ml_models, row1)
-                st.metric("Estimated Potential", f"{pred_pot:.0f}")
-            except Exception:
-                st.metric("Estimated Potential", "—")
-
-        # Similar players (simple list, no scores)
-        st.markdown("#### Similar Players")
-        try:
-            similar = get_similar_players(ml_models, player1, k=6)
-            if similar:
-                names = [p[0] for p in similar]
-                st.write(", ".join(names))
-            else:
-                st.caption(f"No similar players found for {player1}.")
-        except Exception:
-            st.caption("Similar players unavailable.")
-    else:
-        st.caption("Predictions unavailable for this dataset.")
+        value_str = f"€{value/1e6:.1f}M" if value and value > 0 else "—"
+        wage_str = f"€{wage/1000:.0f}K" if wage and wage > 0 else "—"
+        with key_col1 if idx == 0 else key_col2:
+            st.markdown(f"""
+            **{pname}**  
+            Age: {age} • Overall: {overall} • Potential: {potential} • Position: {pos}  
+            Value: {value_str} • Wage: {wage_str}  
+            Club: {club} • Nation: {nation}
+            """)
 
 
 if __name__ == "__main__":
