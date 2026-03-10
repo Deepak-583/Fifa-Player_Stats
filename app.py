@@ -408,45 +408,38 @@ def main():
         overall = info.get("Overall", "—")
         st.info(f"**{pname}** | Club: {club} | Nation: {nation} | Position: {pos} | Overall: {overall}")
 
-    # Predictions section
+    # Predictions section (simple, user-friendly)
     st.markdown("---")
     st.subheader("Predictions")
     if ml_models:
-        pred_col1, pred_col2, pred_col3 = st.columns(3)
+        pred_col1, pred_col2 = st.columns(2)
         row1 = cache[player1]["row"]
         with pred_col1:
             try:
                 pred_val = predict_value(ml_models, row1)
-                actual_val = row1.get("Value", 0)
-                st.metric("Predicted Market Value", f"€{pred_val/1e6:.2f}M", f"Actual: €{actual_val/1e6:.2f}M" if actual_val else None)
-            except Exception as e:
-                st.metric("Predicted Market Value", "—", "N/A")
-                st.caption(str(e)[:80])
+                st.metric("Estimated Market Value", f"€{pred_val/1e6:.2f}M")
+            except Exception:
+                st.metric("Estimated Market Value", "—")
         with pred_col2:
             try:
                 pred_pot = predict_potential(ml_models, row1)
-                actual_pot = row1.get("Potential_overall", "—")
-                st.metric("Predicted Potential", f"{pred_pot:.0f}", f"Actual: {actual_pot}" if pd.notna(actual_pot) else None)
-            except Exception as e:
-                st.metric("Predicted Potential", "—", "N/A")
-        with pred_col3:
-            st.metric("Model R² (Value)", f"{ml_models['metrics']['value_r2']:.2f}", "Training score")
-        st.caption("Predictions from Random Forest models trained on the dataset.")
+                st.metric("Estimated Potential", f"{pred_pot:.0f}")
+            except Exception:
+                st.metric("Estimated Potential", "—")
 
-        # Similar players
+        # Similar players (simple list, no scores)
         st.markdown("#### Similar Players")
         try:
             similar = get_similar_players(ml_models, player1, k=6)
             if similar:
-                sim_df = pd.DataFrame(similar, columns=["Player", "Similarity (lower = more similar)"])
-                sim_df["Similarity (lower = more similar)"] = sim_df["Similarity (lower = more similar)"].round(2)
-                st.dataframe(sim_df, use_container_width=True, hide_index=True)
+                names = [p[0] for p in similar]
+                st.write(", ".join(names))
             else:
-                st.caption(f"No similar players found for {player1} (player may not be in training set).")
-        except Exception as e:
-            st.caption(f"Similar players: {str(e)[:100]}")
+                st.caption(f"No similar players found for {player1}.")
+        except Exception:
+            st.caption("Similar players unavailable.")
     else:
-        st.caption("Models could not be trained. Check data columns (Value, Wage, Overall, etc.).")
+        st.caption("Predictions unavailable for this dataset.")
 
 
 if __name__ == "__main__":
