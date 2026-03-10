@@ -93,10 +93,10 @@ def derive_player_stats(row: pd.Series) -> dict:
 
 
 def create_radar_chart(players_data: list[dict]) -> go.Figure:
-    """Create an overlapping radar chart for one or more players (football theme)."""
+    """Create radar chart with vibrant multi-color theme."""
     fig = go.Figure()
-    # Football-inspired colors: pitch line white, team colors
-    TEAM_COLORS = ["#ffd700", "#00bfff", "#ff6b35", "#7cfc00", "#ff1493"]
+    # Bold, distinct colors: cyan, gold, coral, lime, magenta
+    TEAM_COLORS = ["#00d4ff", "#ffd700", "#ff6b35", "#00ff88", "#ff1493"]
     for i, p in enumerate(players_data):
         name = p["name"]
         stats = p["stats"]
@@ -108,25 +108,25 @@ def create_radar_chart(players_data: list[dict]) -> go.Figure:
                 r=r,
                 theta=theta,
                 name=name,
-                line=dict(color=color, width=3),
+                line=dict(color=color, width=3.5),
                 fill="toself",
-                opacity=0.4,
+                opacity=0.45,
             )
         )
 
     fig.update_layout(
         polar=dict(
-            bgcolor="rgba(26,61,10,0.6)",
+            bgcolor="rgba(15,23,42,0.6)",
             radialaxis=dict(
                 visible=True,
                 range=[0, 100],
                 tickvals=[20, 40, 60, 80, 100],
-                gridcolor="rgba(255,255,255,0.3)",
-                tickfont=dict(color="#f5f5dc", size=12),
+                gridcolor="rgba(0,212,255,0.35)",
+                tickfont=dict(color="#94a3b8", size=12),
             ),
             angularaxis=dict(
-                gridcolor="rgba(255,255,255,0.3)",
-                tickfont=dict(color="#f5f5dc", size=13),
+                gridcolor="rgba(34,197,94,0.3)",
+                tickfont=dict(color="#e2e8f0", size=13),
             ),
         ),
         showlegend=True,
@@ -136,14 +136,17 @@ def create_radar_chart(players_data: list[dict]) -> go.Figure:
             y=1.02,
             xanchor="center",
             x=0.5,
-            font=dict(color="#f5f5dc", size=14),
-            bgcolor="rgba(26,61,10,0.8)",
+            font=dict(color="#e2e8f0", size=14),
+            bgcolor="rgba(15,23,42,0.85)",
         ),
-        title=dict(text="Player Skills Radar Chart", font=dict(size=24, color="#ffd700")),
+        title=dict(
+            text="Player Skills Radar Chart",
+            font=dict(size=24, color="#00d4ff"),
+        ),
         margin=dict(t=80, b=60, l=80, r=80),
         height=500,
         paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#f5f5dc"),
+        font=dict(color="#e2e8f0"),
     )
     return fig
 
@@ -156,119 +159,159 @@ def main():
         initial_sidebar_state="collapsed",
     )
 
-    # Football-themed styling
+    # Vibrant multi-theme styling with gradients
     st.markdown(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@400;600&family=Poppins:wght@400;600&display=swap');
         
-        /* Pitch-style background with stripes */
+        /* Dynamic gradient background: night stadium → pitch green → teal */
         .stApp {
-            background: linear-gradient(180deg, #1a3d0a 0%, #2d5016 25%, #3d6b1a 50%, #2d5016 75%, #1a3d0a 100%);
-            background-size: 100% 100%;
+            background: linear-gradient(135deg, 
+                #0f172a 0%, 
+                #1e3a5f 20%, 
+                #0d2818 40%, 
+                #1a4d2e 60%, 
+                #0c4a6e 80%, 
+                #0f172a 100%);
+            background-attachment: fixed;
+            background-size: 400% 400%;
+            animation: bgShift 15s ease infinite;
+        }
+        @keyframes bgShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
         }
         .stApp::before {
             content: '';
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: repeating-linear-gradient(
-                90deg,
-                transparent,
-                transparent 80px,
-                rgba(255,255,255,0.02) 80px,
-                rgba(255,255,255,0.02) 81px
-            );
+            background: radial-gradient(ellipse at 50% 0%, rgba(0,212,255,0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 80%, rgba(255,215,0,0.06) 0%, transparent 40%),
+                        radial-gradient(ellipse at 20% 70%, rgba(34,197,94,0.05) 0%, transparent 40%);
             pointer-events: none;
             z-index: 0;
         }
         
-        /* Main content area - pitch center / floodlit feel */
+        /* Main content - glass card with cyan-to-amber gradient border */
         .main .block-container {
             padding: 2rem 2rem 3rem;
             max-width: 1200px;
-            background: linear-gradient(145deg, rgba(61,107,26,0.85) 0%, rgba(45,80,22,0.9) 50%, rgba(26,61,10,0.95) 100%);
-            border-radius: 12px;
-            border: 3px solid rgba(255,215,0,0.4);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 0 60px rgba(255,255,255,0.03);
+            background: linear-gradient(160deg, 
+                rgba(15,23,42,0.9) 0%, 
+                rgba(30,58,95,0.85) 30%,
+                rgba(26,77,46,0.8) 70%,
+                rgba(15,23,42,0.95) 100%);
+            border-radius: 16px;
+            border: 1px solid transparent;
+            background-clip: padding-box;
+            box-shadow: 0 0 0 2px rgba(0,212,255,0.3), 
+                        0 0 40px rgba(0,212,255,0.1),
+                        0 8px 32px rgba(0,0,0,0.4),
+                        inset 0 1px 0 rgba(255,255,255,0.05);
             margin-top: 1rem;
         }
         
-        /* Headers - jersey number style */
+        /* Title - vibrant gradient text */
         h1 {
             font-family: 'Bebas Neue', sans-serif !important;
-            color: #ffd700 !important;
+            background: linear-gradient(90deg, #00d4ff, #ffd700, #22c55e, #00d4ff);
+            background-size: 200% auto;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
             font-size: 2.8rem !important;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            letter-spacing: 2px;
+            filter: drop-shadow(0 0 20px rgba(0,212,255,0.4));
+            letter-spacing: 3px;
+            animation: gradientText 4s linear infinite;
+        }
+        @keyframes gradientText {
+            to { background-position: 200% center; }
         }
         h2, h3 {
             font-family: 'Oswald', sans-serif !important;
-            color: #f5f5dc !important;
+            color: #e2e8f0 !important;
             font-weight: 600 !important;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+            text-shadow: 0 0 20px rgba(0,212,255,0.3);
         }
         p, span, div[data-testid="stMarkdown"] {
-            color: #f5f5dc !important;
+            color: #f1f5f9 !important;
         }
         .stCaption {
-            color: #c8d4a8 !important;
+            color: #94a3b8 !important;
         }
         
-        /* Selectboxes - pitch line style */
+        /* Selectboxes - cyan/green accent theme */
         .stSelectbox > div {
-            background: rgba(255,255,255,0.95) !important;
-            border: 2px solid #2d5016 !important;
-            border-radius: 8px !important;
-            font-family: 'Oswald', sans-serif !important;
+            background: linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.98)) !important;
+            border: 2px solid rgba(0,212,255,0.5) !important;
+            border-radius: 10px !important;
+            font-family: 'Poppins', sans-serif !important;
             font-weight: 600 !important;
+            color: #f8fafc !important;
+            box-shadow: 0 0 15px rgba(0,212,255,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
         }
         
-        /* Expander - stadium section */
+        /* Expander - cyan/teal theme */
         .streamlit-expanderHeader {
-            background: rgba(45,80,22,0.9) !important;
-            border: 1px solid rgba(255,255,255,0.2) !important;
-            border-radius: 8px !important;
-            color: #ffd700 !important;
+            background: linear-gradient(90deg, rgba(0,212,255,0.2), rgba(34,197,94,0.15)) !important;
+            border: 1px solid rgba(0,212,255,0.4) !important;
+            border-radius: 10px !important;
+            color: #00d4ff !important;
         }
         
-        /* Info boxes - player card style */
+        /* Info boxes - gold/amber gradient theme */
         div[data-testid="stAlert"] {
-            background: linear-gradient(135deg, rgba(26,61,10,0.95) 0%, rgba(45,80,22,0.9) 100%) !important;
-            border: 2px solid #ffd700 !important;
-            border-radius: 8px !important;
+            background: linear-gradient(135deg, 
+                rgba(251,191,36,0.15) 0%, 
+                rgba(34,197,94,0.12) 50%,
+                rgba(0,212,255,0.1) 100%) !important;
+            border: 1px solid rgba(251,191,36,0.5) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 0 20px rgba(251,191,36,0.1);
         }
         div[data-testid="stAlert"] p, div[data-testid="stAlert"] strong {
-            color: #f5f5dc !important;
+            color: #fef9c3 !important;
         }
         
-        /* Metrics - scoreboard style */
+        /* Metrics - each column gets different accent */
         [data-testid="stMetricValue"] {
             font-family: 'Bebas Neue', sans-serif !important;
             font-size: 2rem !important;
-            color: #ffd700 !important;
+            background: linear-gradient(135deg, #00d4ff, #22c55e) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
         }
         [data-testid="stMetricLabel"] {
-            color: #c8d4a8 !important;
+            color: #94a3b8 !important;
             font-family: 'Oswald', sans-serif !important;
         }
         
-        /* Dataframes - pitch overlay */
+        /* Dataframes - subtle gradient border */
         .stDataFrame {
-            border-radius: 8px !important;
+            border-radius: 10px !important;
             overflow: hidden !important;
-            border: 1px solid rgba(255,255,255,0.2) !important;
+            border: 1px solid rgba(0,212,255,0.3) !important;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
         }
         
-        /* Divider - pitch line */
+        /* Divider - gradient line */
         hr {
-            border-color: rgba(255,215,0,0.5) !important;
+            height: 2px !important;
+            background: linear-gradient(90deg, transparent, #00d4ff, #ffd700, #22c55e, transparent) !important;
+            border: none !important;
             margin: 1.5rem 0 !important;
+            opacity: 0.6;
         }
         
-        /* Hide Streamlit branding for cleaner look */
+        /* Hide Streamlit branding */
         #MainMenu { visibility: hidden; }
         footer { visibility: hidden; }
-        header { background: rgba(26,61,10,0.9) !important; }
+        header { 
+            background: linear-gradient(90deg, rgba(15,23,42,0.95), rgba(30,58,95,0.9)) !important;
+            border-bottom: 1px solid rgba(0,212,255,0.2) !important;
+        }
         </style>
         """,
         unsafe_allow_html=True,
