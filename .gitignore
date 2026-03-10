@@ -9,5 +9,5 @@ venv/
 .eggs/
 dist/
 build/
-.streamlit/
+.streamlit/secrets.toml
 *.xlsx
