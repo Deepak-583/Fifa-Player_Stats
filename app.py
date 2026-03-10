@@ -3,6 +3,7 @@ FIFA Player Stats - Spider Web (Radar) Chart Comparator
 Compare strengths and weaknesses of football players using radar charts and ML predictions.
 """
 
+import html
 import sys
 import streamlit as st
 import pandas as pd
@@ -305,6 +306,61 @@ def main():
             opacity: 0.6;
         }
         
+        /* VS Box styling */
+        .vs-container {
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            gap: 0;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            background: linear-gradient(135deg, rgba(15,23,42,0.6), rgba(30,58,95,0.5));
+            border-radius: 16px;
+            border: 2px solid rgba(0,212,255,0.4);
+            box-shadow: 0 0 30px rgba(0,212,255,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .vs-player-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+        .vs-player-box.left { background: linear-gradient(180deg, rgba(0,212,255,0.12), transparent); }
+        .vs-player-box.right { background: linear-gradient(180deg, rgba(255,215,0,0.12), transparent); }
+        .vs-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255,215,0,0.6);
+        }
+        .vs-img {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .vs-name { 
+            margin-top: 0.75rem; 
+            font-weight: 600; 
+            color: #e2e8f0;
+            text-align: center;
+        }
+        .vs-overall {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            color: #00d4ff;
+            margin-top: 0.25rem;
+        }
+        
         /* Hide Streamlit branding */
         #MainMenu { visibility: hidden; }
         footer { visibility: hidden; }
@@ -384,6 +440,44 @@ def main():
     players_data = [{"name": player1, "stats": cache[player1]["stats"]}]
     if player2 and player2 != "— None —":
         players_data.append({"name": player2, "stats": cache[player2]["stats"]})
+
+    # VS Box: Player 1 | VS | Player 2 with images
+    row1 = cache[player1]["row"]
+    img1 = row1.get("Images", "")
+    overall1 = row1.get("Overall", "—")
+    placeholder_url = "https://ui-avatars.com/api/?name=Player&size=120&background=1e293b&color=94a3b8"
+    img1_src = str(img1) if img1 and str(img1).startswith("http") else placeholder_url
+
+    if player2 and player2 != "— None —":
+        row2 = cache[player2]["row"]
+        img2 = row2.get("Images", "")
+        overall2 = row2.get("Overall", "—")
+        img2_src = str(img2) if img2 and str(img2).startswith("http") else placeholder_url
+        name2_esc = html.escape(player2)
+        ovr2_html = f'OVR {overall2}'
+    else:
+        img2_src = placeholder_url
+        name2_esc = "Select Player 2"
+        ovr2_html = "—"
+
+    st.markdown(
+        f"""
+        <div class="vs-container">
+            <div class="vs-player-box left">
+                <img src="{img1_src}" class="vs-img" onerror="this.src='{placeholder_url}'" />
+                <div class="vs-name">{html.escape(player1)}</div>
+                <div class="vs-overall">OVR {overall1}</div>
+            </div>
+            <div class="vs-divider">VS</div>
+            <div class="vs-player-box right">
+                <img src="{img2_src}" class="vs-img" onerror="this.src='{placeholder_url}'" />
+                <div class="vs-name">{name2_esc}</div>
+                <div class="vs-overall">{ovr2_html}</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
     # Main: Radar chart
     fig = create_radar_chart(players_data)
